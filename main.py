@@ -1,1 +1,2 @@
-print("try git commit and push.")
+
+print("have a good day")
