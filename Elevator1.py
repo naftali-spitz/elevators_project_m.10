@@ -15,7 +15,7 @@ FLOOR_TRANSIT_TIME = 0.5
 ID_N = 0
 BUILDING_X = 10
 DEST = -1
-PIXELS_PER_SECOND = 100
+PIXELS_PER_SECOND = 116
 
 class Elevator(pygame.sprite.Sprite):
 
@@ -44,7 +44,6 @@ class Elevator(pygame.sprite.Sprite):
         if current_time - self.last_destination_time >= 2:
 
             target_y = self.destinations[0]
-            print(target_y)
             # print(self.destinations[0])
 
             if self.rect.y != target_y:
@@ -61,18 +60,18 @@ class Elevator(pygame.sprite.Sprite):
                         self.rect.y -= 1
                     else:
                         self.rect.y += 1
+            else:
+                self.destinations.popleft()
+                self.move_stop_elevator(0)
 
-                    self.destinations.popleft()
-                    self.move_stop_elevator(0)
+                ding_sound = pygame.mixer.Sound('ding.mp3')
+                # ding_sound.play()
 
-                    ding_sound = pygame.mixer.Sound('ding.mp3')
-                    # ding_sound.play()
+                self.last_destination_time = current_time
+                self.current_destination_index += 1
 
-                    self.last_destination_time = current_time
-                    self.current_destination_index += 1
-
-                    if self.current_destination_index >= len(self.destinations):
-                        self.current_destination_index = 0
+                if self.current_destination_index >= len(self.destinations):
+                    self.current_destination_index = 0
 
     def floor_to_y(floor):
         return 550 - (floor * 58)

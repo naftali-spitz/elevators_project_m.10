@@ -35,7 +35,7 @@ class RunGame:
 
     def __init__(self):
 
-        building = build_test(1, 9)
+        building = build_test(1, 10)
 
         pygame.init()
 
@@ -67,13 +67,47 @@ class RunGame:
         # pygame.time.set_timer(pygame.USEREVENT, 1000)
         clock = pygame.time.Clock()
 
+        TIMEREVENT = pygame.USEREVENT + 1
+        pygame.time.set_timer(TIMEREVENT, 1000)
+
         while not exit:
-            clock.tick(80)
+            clock.tick(60)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     exit = True
+                elif event.type == TIMEREVENT:
+                    for floor in range(len(building.timers)):
+                        if building.timers[floor] > 0:
+                            building.timers[floor] -= 0.5
+
+                            current_timer = building.timers[floor]
+                            print(current_timer)
+
+                            screen.fill((255, 255, 255), (190, 550 - floor * 58, 200, 25))
+                            # current_timer = building.timers[floor]
+                            font = pygame.font.Font(None, 25)
+
+                            time_text = font.render(f'{current_timer}', True, BLACK)
+                            screen.blit(time_text, (190, 550 - (floor * 58) + 10))
+                            # screen.blit(timer_cover, timer_cover.get_rect(center=(400, 550 - floor * 58)))
+
+                            if building.timers[floor] == 0:
+                                print('Time\'s up!')
+                        # current_seconds = building.timers[floor]
+                        # pygame.time.set_timer(pygame.USEREVENT, 1000)
+                        #
+                        # while True:
+                        #     for event_t in pygame.event.get():
+                        #         if event_t.type == pygame.QUIT:
+                        #             pygame.quit()
+                        #             sys.exit()
+                        #         if event.type == pygame.USEREVENT:
+                        #             current_seconds -= 1
+                        #     # screen.blit(timer_cover, timer_cover.get_rect(center=(400, 550 - floor * 58)))
+                        #
+                        #     timer_text = FONT.render(f"{current_seconds}", True, [255, 255, 255])
+                        #     screen.blit(timer_text, (400, 550 - floor * 58))
                 else:
-                    # building.test_elv_call()
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         current_x, current_y = pygame.mouse.get_pos()
                         for i in range(len(Building1.FLOOR_POS)):

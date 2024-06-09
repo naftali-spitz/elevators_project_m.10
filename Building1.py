@@ -32,7 +32,7 @@ class Building:
         # self.floors = [Floor for floor in range(floor_count)]
         self.floors = pygame.sprite.Group()
         self.elevator_group = pygame.sprite.Group()
-        self.timers = [0] * floor_count
+        self.timers = [0] * (floor_count + 1)
 
     def floor_pos(self, y):
         floor_pos_x = 10
@@ -83,7 +83,7 @@ class Building:
     # print(self.elevator_group)
 
     def cunstruct_elevators(self, number_of_elevators, image):
-        init_x = 220
+        init_x = 250
         for i in range(number_of_elevators):
             elevator = Elevator(i, image, (init_x + i * 55))
             self.elevator_group.add(elevator)
@@ -93,12 +93,15 @@ class Building:
         min_time = float('inf')
         for elevator in self.elevator_group:
             test_min_time = elevator.total_travel_length(current_floor)
+
             if test_min_time < min_time:
                 selected_elevator = elevator
                 min_time = test_min_time
 
         selected_elevator.add_destination(current_floor)
-        self.timers[current_floor] = min_time
+
+        self.timers[current_floor] = min_time / 232
+        print(self.timers)
         return selected_elevator
 
     # def elevator(self, floor):
