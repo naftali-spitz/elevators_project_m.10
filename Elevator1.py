@@ -48,7 +48,7 @@ class Elevator(pygame.sprite.Sprite):
 
             if self.rect.y != target_y:
                 dis_to_target = abs(self.rect.y - target_y)
-                if dis_to_target > 50:
+                if dis_to_target > 0:
                     self.move_stop_elevator(2)
                     if self.rect.y > target_y:
                         self.rect.y -= self.speed

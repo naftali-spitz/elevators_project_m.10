@@ -25,10 +25,10 @@ class ScreenBox:
         self.height = height
 
 
-class ElevatorCall:
-
-    def is_on_button(self, button_center_coordinates, point):
-        return eucledian_distance(button_center_coordinates, point) < BUTTON_RADIUS
+# class ElevatorCall:
+#
+#     def is_on_button(self, button_center_coordinates, point):
+#         return eucledian_distance(button_center_coordinates, point) < BUTTON_RADIUS
 
 
 class RunGame:
@@ -54,9 +54,6 @@ class RunGame:
 
         floor_image = pygame.image.load(BRICK_TEXTURE).convert()
         building.cunsruct_floors(10, floor_image, screen)
-        # for i in building.floors:
-        #     a = pygame.draw.circle(i.image, GRAY, (i.rect.centerx, i.rect.centery), BUTTON_RADIUS)
-        #     screen.blit(a)
 
         elevator_image = pygame.image.load(ELEVATOR_IMAGE).convert_alpha()
         building.cunstruct_elevators(1, elevator_image)
@@ -69,6 +66,7 @@ class RunGame:
 
         TIMEREVENT = pygame.USEREVENT + 1
         pygame.time.set_timer(TIMEREVENT, 1000)
+        last_time = pygame.time.get_ticks()
 
         while not exit:
             clock.tick(60)
@@ -76,23 +74,41 @@ class RunGame:
                 if event.type == pygame.QUIT:
                     exit = True
                 elif event.type == TIMEREVENT:
+                    current_time = pygame.time.get_ticks()
+                    time_elapsed = current_seconds - last_time
+                    last_time = current_time
+
                     for floor in range(len(building.timers)):
                         if building.timers[floor] > 0:
-                            building.timers[floor] -= 0.5
+                            building.timers[floor] -= 0.6
 
-                            current_timer = building.timers[floor]
-                            print(current_timer)
+                            # if building.timers[floor] < 0:
+                            #     building.timers[floor] = 0
 
-                            screen.fill((255, 255, 255), (190, 550 - floor * 58, 200, 25))
-                            # current_timer = building.timers[floor]
-                            font = pygame.font.Font(None, 25)
+                    for floor in range(len(building.timers)):
+                        screen.fill(WHITE, (190, 550 - floor *58, 200, 25))
+                        font = pygame.font.Font(None, 25)
+                        time_text = font.render(f'{building.timers[floor]:.1f}', True, BLACK)
+                        screen.blit(time_text, (190, 550 - (floor * 58) + 10))
 
-                            time_text = font.render(f'{current_timer}', True, BLACK)
-                            screen.blit(time_text, (190, 550 - (floor * 58) + 10))
+                    # for floor in range(len(building.timers)):
+                    #     if building.timers[floor] > 0:
+                    #         building.timers[floor] -= 0.50
+                    #
+                    #         if building.timers[floor] < 0.5:
+                    #             building.timers[floor] = 0
+                    #
+                    #         current_timer = round(building.timers[floor], 2)
+                    #         print(current_timer)
+                    #
+                    #         screen.fill((255, 255, 255), (190, 550 - floor * 58, 200, 25))
+                    #         # current_timer = building.timers[floor]
+                    #         font = pygame.font.Font(None, 25)
+                    #
+                    #         time_text = font.render(f'{current_timer}', True, BLACK)
+                    #         screen.blit(time_text, (190, 550 - (floor * 58) + 10))
                             # screen.blit(timer_cover, timer_cover.get_rect(center=(400, 550 - floor * 58)))
 
-                            if building.timers[floor] == 0:
-                                print('Time\'s up!')
                         # current_seconds = building.timers[floor]
                         # pygame.time.set_timer(pygame.USEREVENT, 1000)
                         #
@@ -121,7 +137,7 @@ class RunGame:
                                 # current_floor_sprite = building.floors.sprites()[i]
                                 # current_floor_sprite.time_pending = min_time
 
-
+            pygame.display.flip()
             building.elevator_group.clear(screen, background)
             building.elevator_group.update(screen)
             building.elevator_group.draw(screen)
