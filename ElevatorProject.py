@@ -1,20 +1,15 @@
 import pygame
 from Elevator1 import Elevator
-import Building1
-from Building1 import Building as build_test
-from Floor import Floor
-import sys
+from Building1 import Building
 
 ELEVATOR_IMAGE = 'elv-small.png'
 BRICK_TEXTURE = 'brick-texture.png'
 BLACK = [0, 0, 0]
 WHITE = [255, 255, 255]
 GRAY = [180, 180, 180]
-FLOOR_POS = []
-BUTTON_RADIUS = 20
+# BUTTON_RADIUS = 20
 FLOOR_TRANSIT_TIME = 0.5
-ID_N = 0
-BUILDING_X = 10
+# BUILDING_INIT_X = 10
 
 
 class ScreenBox:
@@ -25,45 +20,41 @@ class ScreenBox:
         self.height = height
 
 
-# class ElevatorCall:
-#
-#     def is_on_button(self, button_center_coordinates, point):
-#         return eucledian_distance(button_center_coordinates, point) < BUTTON_RADIUS
-
-
 class RunGame:
+    """Class responsible for running the elevator project game."""
 
     def __init__(self):
-
-        building = build_test(1, 10)
+        """Initialize the RunGame object and set up the game environment."""
 
         pygame.init()
 
-        # Icon = pygame.image.load(ELEVATOR_IMAGE)
-        color1 = (255, 255, 255)
+        number_of_floors = int(input('how many floor do you want to initialise:'))
+        number_of_elevators = int(input('How many elevators do you want to initialise:'))
+
+        Icon = pygame.image.load('134185_elevator_icon.png')
         box_len = 800
         box_hight = 600
         FONT = pygame.font.Font("ArialRoundedMTBold.ttf", 25)
 
         screen = pygame.display.set_mode((box_len, box_hight))
         background = pygame.Surface((box_len, box_hight))
-        background.fill((255, 255, 255))
-        screen.fill(color1)
-        pygame.display.set_caption("ELOVATOR PROJECT")
-        # pygame.display.set_icon(Icon)
+        background.fill(WHITE)
+        screen.fill(WHITE)
+        pygame.display.set_caption("MEFATCHIM ELEVATOR PROJECT")
+        pygame.display.set_icon(Icon)
+
+        building = Building(number_of_floors)
 
         floor_image = pygame.image.load(BRICK_TEXTURE).convert()
-        building.cunsruct_floors(10, floor_image, screen)
+        building.construct_floors(number_of_floors, floor_image, screen)
 
         elevator_image = pygame.image.load(ELEVATOR_IMAGE).convert_alpha()
-        building.cunstruct_elevators(1, elevator_image)
+        building.construct_elevators(number_of_elevators, elevator_image)
 
         exit = False
 
         current_seconds = 0
-        # pygame.time.set_timer(pygame.USEREVENT, 1000)
         clock = pygame.time.Clock()
-
         TIMEREVENT = pygame.USEREVENT + 1
         pygame.time.set_timer(TIMEREVENT, 1000)
         last_time = pygame.time.get_ticks()
@@ -77,16 +68,17 @@ class RunGame:
                     current_time = pygame.time.get_ticks()
                     time_elapsed = current_seconds - last_time
                     last_time = current_time
-
                     for floor in range(len(building.timers)):
+                        print(building.timers[floor])
                         if building.timers[floor] > 0:
-                            building.timers[floor] -= 0.6
+                            building.timers[floor] -= FLOOR_TRANSIT_TIME
 
-                            # if building.timers[floor] < 0:
-                            #     building.timers[floor] = 0
+                            if building.timers[floor] < FLOOR_TRANSIT_TIME:
+                                building.timers[floor] = 0
 
                     for floor in range(len(building.timers)):
-                        screen.fill(WHITE, (190, 550 - floor *58, 200, 25))
+                        
+                        screen.fill(WHITE, (190, 550 - floor * 58, 200, 25))
                         font = pygame.font.Font(None, 25)
                         time_text = font.render(f'{building.timers[floor]:.1f}', True, BLACK)
                         screen.blit(time_text, (190, 550 - (floor * 58) + 10))
@@ -126,20 +118,18 @@ class RunGame:
                 else:
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         current_x, current_y = pygame.mouse.get_pos()
-                        for i in range(len(Building1.FLOOR_POS)):
-                            # if FLOOR_POS[i] <= current_y <= FLOOR_POS[i] + 50 and 10 <= current_x <= 160:
-                            current_x_button, current_y_button = Building1.FLOOR_POS[i]
+                        for floor in building.floors:
+                            current_x_button, current_y_button = floor.rect.center
                             if building.is_on_button((current_x_button, current_y_button), (current_x, current_y)):
                                 font = pygame.font.Font(None, 25)
-                                floor_num_text = font.render(f"{i}", True, (0, 255, 0))
-                                screen.blit(floor_num_text, (81, Building1.FLOOR_POS[i][1] - 7))
-                                building.call_some_elevator(i)
+                                floor_num_text = font.render(f"{floor.id}", True, (0, 255, 0))
+                                screen.blit(floor_num_text, (floor.rect.centerx - 4, floor.rect.centery - 7))
+                                building.call_some_elevator(floor.id)
                                 # current_floor_sprite = building.floors.sprites()[i]
                                 # current_floor_sprite.time_pending = min_time
 
-            pygame.display.flip()
             building.elevator_group.clear(screen, background)
-            building.elevator_group.update(screen)
+            building.elevator_group.update()
             building.elevator_group.draw(screen)
             pygame.display.update()
 
