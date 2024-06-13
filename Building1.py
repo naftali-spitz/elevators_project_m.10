@@ -3,12 +3,14 @@ import pygame
 from Floor import Floor
 from Elevator1 import Elevator
 
-ELEVATOR_IMAGE = 'elv-small.png'
-BRICK_TEXTURE = 'brick-texture.png'
+ELEVATOR_IMAGE = 'resources/elv-small.png'
+BRICK_TEXTURE = 'resources/brick-texture.png'
 BLACK = [0, 0, 0]
 WHITE = [255, 255, 255]
 GRAY = [180, 180, 180]
 BUTTON_RADIUS = 20
+FLOOR_TRANSIT_TIME = 0.5
+
 
 
 def eucledian_distance(point1, point2):
@@ -29,18 +31,6 @@ class Building:
         self.floors = pygame.sprite.Group()
         self.elevator_group = pygame.sprite.Group()
         self.timers = [0] * (floor_count + 1)
-
-    #
-    # def floor_pos(self, y):
-    #     """Calculate the position of a floor based on the y-coordinate
-    #
-    #     Arg:
-    #         y (init): The y-coordinate of the floor.
-    #     Returns:
-    #         tuple: The position of the floor.
-    #         """
-    #     floor_pos_x = 10
-    #     FLOOR_POS.append((floor_pos_x + 75, y + 25))
 
     def construct_floors(self, num_of_floors, image, screen):
         """construct the floors of the building.
@@ -97,18 +87,18 @@ class Building:
             Elevator: The selected elevator to respond to the call.
         """
         selected_elevator = None
-        min_time = float('inf')
+        min_pixels_to_travel = float('inf')
         for elevator in self.elevator_group:
-            test_min_time = elevator.total_travel_length(current_floor)
+            test_pixels_to_travel = elevator.total_travel_length(current_floor)
 
-            if test_min_time < min_time:
+            if test_pixels_to_travel < min_pixels_to_travel:
                 selected_elevator = elevator
-                min_time = test_min_time
+                min_pixels_to_travel = test_pixels_to_travel
 
         selected_elevator.add_destination(current_floor)
 
-        self.timers[current_floor] = min_time / 232
-        # print(self.timers)
+        self.timers[current_floor.id] = min_pixels_to_travel / 116
+
         return selected_elevator
 
     def is_on_button(self, button_center_coordinates, point):
@@ -121,3 +111,39 @@ class Building:
                 bool: True if the point is within the range of the button, False otherwise.
             """
         return eucledian_distance(button_center_coordinates, point) < BUTTON_RADIUS
+
+    def update(self, screen):
+        self.elevator_group.update(screen, self.timers)
+        # for floor in self.floors:
+        #
+        #     travel_time = self.timers[floor.id] / speed
+        #
+        #     screen.fill((255, 255, 255), (190, 500, 200, 25))
+        #
+        #     font = pygame.font.Font(None, 25)
+        #
+        #     time_text = font.render(f'{round((travel_time - 1) / 100, 2)}', True, BLACK)
+        #     screen.blit(time_text, (190, 500 + 10))
+        current_seconds = 0
+        current_time = pygame.time.get_ticks()
+        last_time = current_time
+        time_elapsed = current_seconds - last_time
+        print(time_elapsed)
+        clock = 60/15
+        TEAL_TO_REAL_TIME_RATIO = 0.8
+        # last_time = pygame.time.get_ticks()
+        for time in range(len(self.timers)):
+            if self.timers[time] > 0:
+                self.timers[time] -= ((1 * clock) / 116) * TEAL_TO_REAL_TIME_RATIO
+
+            if self.timers[time] < FLOOR_TRANSIT_TIME:
+                self.timers[time] = 0
+
+                # Building.set_floor_panel_color(building.floors.sprites()[floor], True)
+
+                for floor in range(len(self.timers)):
+                    screen.fill(WHITE, (190, 550 - floor * 58, 200, 25))
+                    font = pygame.font.Font(None, 25)
+                    time_text = font.render(f'{self.timers[floor]:.1f}', True, BLACK)
+                    screen.blit(time_text, (190, 550 - (floor * 58) + 10))
+

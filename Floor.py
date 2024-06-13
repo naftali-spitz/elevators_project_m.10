@@ -1,7 +1,7 @@
 import pygame
 
-ELEVATOR_IMAGE = 'elv-small.png'
-BRICK_TEXTURE = 'brick-texture.png'
+ELEVATOR_IMAGE = 'resources/elv-small.png'
+BRICK_TEXTURE = 'resources/brick-texture.png'
 BLACK = [0, 0, 0]
 WHITE = [255, 255, 255]
 GRAY = [180, 180, 180]
