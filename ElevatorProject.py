@@ -63,7 +63,7 @@ class RunGame:
 
         exit = False
         while not exit:
-            clock.tick(60)
+            # clock.tick(60)
             elv = None
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:

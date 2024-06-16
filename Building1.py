@@ -125,16 +125,15 @@ class Building:
         #     time_text = font.render(f'{round((travel_time - 1) / 100, 2)}', True, BLACK)
         #     screen.blit(time_text, (190, 500 + 10))
         current_seconds = 0
-        current_time = pygame.time.get_ticks()
-        last_time = current_time
-        time_elapsed = current_seconds - last_time
-        print(time_elapsed)
+        # current_time = pygame.time.get_ticks()
+        # last_time = current_time
+        # time_elapsed = current_seconds - last_time
         clock = 60/15
-        TEAL_TO_REAL_TIME_RATIO = 0.8
+        # TEAL_TO_REAL_TIME_RATIO = 0.8
         # last_time = pygame.time.get_ticks()
         for time in range(len(self.timers)):
             if self.timers[time] > 0:
-                self.timers[time] -= ((1 * clock) / 116) * TEAL_TO_REAL_TIME_RATIO
+                self.timers[time] -= ((1 * clock) / 116)
 
             if self.timers[time] < FLOOR_TRANSIT_TIME:
                 self.timers[time] = 0
@@ -144,6 +143,6 @@ class Building:
                 for floor in range(len(self.timers)):
                     screen.fill(WHITE, (190, 550 - floor * 58, 200, 25))
                     font = pygame.font.Font(None, 25)
-                    time_text = font.render(f'{self.timers[floor]:.1f}', True, BLACK)
+                    time_text = font.render(f'00:{self.timers[floor]:.02f}', True, BLACK)
                     screen.blit(time_text, (190, 550 - (floor * 58) + 10))
 

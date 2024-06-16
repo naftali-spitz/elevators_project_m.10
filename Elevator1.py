@@ -50,7 +50,7 @@ class Elevator(pygame.sprite.Sprite):
         if len(self._destinations) == 0:
             return
 
-        current_time = time.perf_counter()
+        current_time = pygame.time.get_ticks()
         if current_time - self._last_destination_time >= DELAY_AT_ARRIVAL:
 
             target_y = self._destinations[0]
@@ -102,8 +102,8 @@ class Elevator(pygame.sprite.Sprite):
         for [current, next] in pairwise(des_copy):
             length += abs(current - next)
 
-        count_of_floors = len(des_copy) - 2  # excluding the 2 floor that was added for testing travel
-        # time and the elevators current position
+        count_of_floors = len(des_copy) - 2  # excluding the 2 floor that was added for testing travel time and the
+        # elevators current position
 
         return length + (count_of_floors * DELAY_AT_ARRIVAL * PIXELS_PER_SECOND)
 
@@ -126,6 +126,6 @@ class Elevator(pygame.sprite.Sprite):
         else:
             self.move_stop_elevator(SPEED_FINAL)
             if self.rect.y > target_y:
-                self.rect.y -= 1
+                self.rect.y -= 2
             else:
-                self.rect.y += 1
+                self.rect.y += 2
