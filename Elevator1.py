@@ -2,6 +2,7 @@ import time
 import pygame
 from collections import deque
 from itertools import pairwise
+import LastTime
 
 FLOOR_TRANSIT_TIME = 0.5
 PIXELS_PER_SECOND = 116
@@ -12,7 +13,7 @@ SPEED_NORMAL = 2
 SPEED_FINAL = 1
 DELAY_AT_ARRIVAL = 2
 BLACK = [0, 0, 0]
-
+LAST_TIME = 0
 
 
 class Elevator(pygame.sprite.Sprite):
@@ -49,18 +50,17 @@ class Elevator(pygame.sprite.Sprite):
 
         if len(self._destinations) == 0:
             return
-
         current_time = pygame.time.get_ticks()
-        if current_time - self._last_destination_time >= DELAY_AT_ARRIVAL:
 
+        if current_time - self._last_destination_time >= DELAY_AT_ARRIVAL * 1000:
             target_y = self._destinations[0]
 
             if self.rect.y != target_y:
                 self.move_elev(target_y, screen, timers)
 
             else:
-                ding_sound = pygame.mixer.Sound('resources/ding.mp3')
-                ding_sound.play()
+                # ding_sound = pygame.mixer.Sound('resources/ding.mp3')
+                # ding_sound.play()
 
                 self._destinations.popleft()
                 self.move_stop_elevator(SPEED_STOP)
@@ -116,9 +116,15 @@ class Elevator(pygame.sprite.Sprite):
 
     def move_elev(self, target_y, screen, timers):
         dest_to_target = abs(self.rect.y - target_y)
-        if dest_to_target > 0:
+        current_time = time.time()
+        elapsed_time = current_time - LastTime.last[self._id]
 
-            self.move_stop_elevator(SPEED_NORMAL)
+        speed = elapsed_time * 116
+        if elapsed_time > 1:
+            speed = 2
+        if dest_to_target > 5:
+
+            self.move_stop_elevator(speed)
             if self.rect.y > target_y:
                 self.rect.y -= self._speed
             else:
@@ -126,6 +132,8 @@ class Elevator(pygame.sprite.Sprite):
         else:
             self.move_stop_elevator(SPEED_FINAL)
             if self.rect.y > target_y:
-                self.rect.y -= 2
+                self.rect.y -= 1
             else:
-                self.rect.y += 2
+                self.rect.y += 1
+
+        LastTime.last[self._id] = time.time()

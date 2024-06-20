@@ -35,35 +35,26 @@ class RunGame:
 
         Icon = pygame.image.load('resources/134185_elevator_icon.png')
         box_len = 800
-        box_hight = 600
+        box_height = 600
         FONT = pygame.font.Font("resources/ArialRoundedMTBold.ttf", 25)
 
-        screen = pygame.display.set_mode((box_len, box_hight))
-        background = pygame.Surface((box_len, box_hight))
+        screen = pygame.display.set_mode((box_len, box_height))
+        background = pygame.Surface((box_len, box_height))
         background.fill(WHITE)
         screen.fill(WHITE)
         pygame.display.set_caption("MEFATCHIM ELEVATOR PROJECT")
         pygame.display.set_icon(Icon)
 
-        building = Building(number_of_floors)
-
         floor_image = pygame.image.load(BRICK_TEXTURE).convert()
-        building.construct_floors(number_of_floors, floor_image, screen)
-
         elevator_image = pygame.image.load(ELEVATOR_IMAGE).convert_alpha()
-        building.construct_elevators(number_of_elevators, elevator_image)
-
-        current_seconds1 = building.timers
-
-        current_seconds = 0
+        building = Building(number_of_floors, floor_image, number_of_elevators, elevator_image, screen)
         clock = pygame.time.Clock()
         TIMEREVENT = pygame.USEREVENT + 1
         pygame.time.set_timer(TIMEREVENT, 1000)
-        last_time = pygame.time.get_ticks()
 
         exit = False
         while not exit:
-            # clock.tick(60)
+            clock.tick(60)
             elv = None
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -130,7 +121,7 @@ class RunGame:
                                 font = pygame.font.Font(None, 25)
                                 floor_num_text = font.render(f"{floor.id}", False, (0, 255, 0))
                                 screen.blit(floor_num_text, (floor.rect.centerx - 4, floor.rect.centery - 7))
-                                elv = building.call_some_elevator(floor)
+                                building.call_some_elevator(floor)
 
             building.elevator_group.clear(screen, background)
             building.update(screen)

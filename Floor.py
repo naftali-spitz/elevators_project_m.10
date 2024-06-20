@@ -22,13 +22,20 @@ class Floor(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.topleft = (10, 550 - id * 58)
         self.button_center_coordinates = self.rect.center
+        self.timer = 0
 
-    def floor_panel(self, test, i):
+    def floor_panel(self, test, i=None):
         font = pygame.font.Font(None, 25)
-        if test > 5:
-            return font.render(f"{i}", True, BLACK)
+        if i == None:
+            if test > 5:
+                return font.render(f"{self.id}", True, BLACK)
+            else:
+                return font.render(f"{self.id}", True, (0, 255, 0))
         else:
-            return font.render(f"{i}", True, (0, 255, 0))
+            if test > 5:
+                return font.render(f"{i}", True, BLACK)
+            else:
+                return font.render(f"{i}", True, (0, 255, 0))
 
     def timer(self, floor, time):
         self.time_pending = time

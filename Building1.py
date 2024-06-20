@@ -1,7 +1,8 @@
 import pygame
+import time as ctime
 
-from Floor import Floor
 from Elevator1 import Elevator
+from Floor import Floor
 
 ELEVATOR_IMAGE = 'resources/elv-small.png'
 BRICK_TEXTURE = 'resources/brick-texture.png'
@@ -9,8 +10,7 @@ BLACK = [0, 0, 0]
 WHITE = [255, 255, 255]
 GRAY = [180, 180, 180]
 BUTTON_RADIUS = 20
-FLOOR_TRANSIT_TIME = 0.5
-
+FLOOR_TRANSIT_TIME = 0.2
 
 
 def eucledian_distance(point1, point2):
@@ -22,7 +22,7 @@ def eucledian_distance(point1, point2):
 class Building:
     """Class representing a building in a game."""
 
-    def __init__(self, floor_count):
+    def __init__(self, number_of_floors, floor_image, number_of_elevators, elevator_image, screen):
         """Initialize the Building object.
 
         Arg:
@@ -30,7 +30,10 @@ class Building:
             """
         self.floors = pygame.sprite.Group()
         self.elevator_group = pygame.sprite.Group()
-        self.timers = [0] * (floor_count + 1)
+        self.timers = [0] * (number_of_floors + 1)
+        self.construct_floors(number_of_floors, floor_image, screen)
+        self.construct_elevators(number_of_elevators, elevator_image)
+        self.last_tick = 0
 
     def construct_floors(self, num_of_floors, image, screen):
         """construct the floors of the building.
@@ -98,6 +101,8 @@ class Building:
         selected_elevator.add_destination(current_floor)
 
         self.timers[current_floor.id] = min_pixels_to_travel / 116
+        current_floor.timer = min_pixels_to_travel / 116
+        print(current_floor.timer)
 
         return selected_elevator
 
@@ -114,35 +119,69 @@ class Building:
 
     def update(self, screen):
         self.elevator_group.update(screen, self.timers)
+        for floor in self.floors:
+            travel_time = self.timers[floor.id]
+
+            speed = travel_time / 116
+            # screen.fill((255, 255, 255), (190, 500, 200, 25))
+
+            # font = pygame.font.Font(None, 25)
+            # time_text = font.render(f'{round((travel_time - 1) / 100, 2)}', True, BLACK)
+            # screen.blit(time_text, (190, 500 + 10))
+        # current_time = ctime.time()
+        # elapsed_time = current_time - LastTime.last_timer
+        # speed = elapsed_time
+        # if elapsed_time > 1:
+        #     speed = 0.01
+        clock = 60 / 15
+        # for time in range(len(self.timers)):
+        #     if self.timers[time] > 0:
+        #         self.timers[time] -= elapsed_time * 3
+        #
+        #     if self.timers[time] < FLOOR_TRANSIT_TIME:
+        #         self.timers[time] = 0
+        #         LastTime.last_timer = ctime.time()
+
+        current_tick = pygame.time.get_ticks()
+        print(current_tick)
+        time_delta = current_tick - self.last_tick  # Calculate time difference since last frame
+        print(time_delta)
+        self.last_tick = current_tick  # Update last_tick for next frame
+        print(self.last_tick)
+
+        for floor in self.floors:
+            if floor.timer > 0:
+                floor.timer -= time_delta/1000  # Subtract time delta from floor timer
+
         # for floor in self.floors:
         #
-        #     travel_time = self.timers[floor.id] / speed
-        #
-        #     screen.fill((255, 255, 255), (190, 500, 200, 25))
-        #
-        #     font = pygame.font.Font(None, 25)
-        #
-        #     time_text = font.render(f'{round((travel_time - 1) / 100, 2)}', True, BLACK)
-        #     screen.blit(time_text, (190, 500 + 10))
-        current_seconds = 0
-        # current_time = pygame.time.get_ticks()
-        # last_time = current_time
-        # time_elapsed = current_seconds - last_time
-        clock = 60/15
-        # TEAL_TO_REAL_TIME_RATIO = 0.8
-        # last_time = pygame.time.get_ticks()
-        for time in range(len(self.timers)):
-            if self.timers[time] > 0:
-                self.timers[time] -= ((1 * clock) / 116)
+        #     if floor.timer > 0:
+        #         floor.timer -= elapsed_time
 
-            if self.timers[time] < FLOOR_TRANSIT_TIME:
-                self.timers[time] = 0
+            if floor.timer <= 0:
+                floor.timer = 0
+                # self.last_tick = pygame.time.get_ticks()
+                floor.floor_panel(True)
 
-                # Building.set_floor_panel_color(building.floors.sprites()[floor], True)
-
-                for floor in range(len(self.timers)):
-                    screen.fill(WHITE, (190, 550 - floor * 58, 200, 25))
+                for floors in self.floors:
+                    floor_num = int(floors.id)
+                    screen.fill(WHITE, (190, 550 - floor_num * 58, 200, 25))
                     font = pygame.font.Font(None, 25)
-                    time_text = font.render(f'00:{self.timers[floor]:.02f}', True, BLACK)
-                    screen.blit(time_text, (190, 550 - (floor * 58) + 10))
-
+                    time_text = font.render(f'00:{floors.timer:.02f}', True, BLACK)
+                    screen.blit(time_text, (190, 550 - (floor_num * 58) + 10))
+        # modified_timer_index = None
+        # for time in range(len(self.timers)):
+        #     if self.timers[time] > 0:
+        #         self.timers[time] -= 0.01#((1 * clock) / 116)
+        #         modified_timer_index = time
+        #
+        #     if self.timers[time] < FLOOR_TRANSIT_TIME:
+        #         self.timers[time] = 0
+        #
+        # if modified_timer_index is not None:
+        #     # Only redraw the modified timer
+        #     floor = modified_timer_index
+        #     screen.fill(WHITE, (190, 550 - floor * 58, 200, 25))
+        #     font = pygame.font.Font(None, 25)
+        #     time_text = font.render(f'00:{self.timers[floor]:.02f}', True, BLACK)
+        #     screen.blit(time_text, (190, 550 - (floor * 58) + 10))
