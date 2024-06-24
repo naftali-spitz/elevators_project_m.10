@@ -2,18 +2,9 @@ import time
 import pygame
 from collections import deque
 from itertools import pairwise
-import LastTime
 
-FLOOR_TRANSIT_TIME = 0.5
-PIXELS_PER_SECOND = 116
-FLOOR_HEIGHT = 58
-INITIAL_FLOOR_Y = 550
-SPEED_STOP = 0
-SPEED_NORMAL = 2
-SPEED_FINAL = 1
-DELAY_AT_ARRIVAL = 2
-BLACK = [0, 0, 0]
-LAST_TIME = 0
+import Data
+import LastTime
 
 
 class Elevator(pygame.sprite.Sprite):
@@ -52,7 +43,7 @@ class Elevator(pygame.sprite.Sprite):
             return
         current_time = pygame.time.get_ticks()
 
-        if current_time - self._last_destination_time >= DELAY_AT_ARRIVAL * 1000:
+        if current_time - self._last_destination_time >= Data.DELAY_AT_ARRIVAL * 1000:
             target_y = self._destinations[0]
 
             if self.rect.y != target_y:
@@ -63,7 +54,7 @@ class Elevator(pygame.sprite.Sprite):
                 # ding_sound.play()
 
                 self._destinations.popleft()
-                self.move_stop_elevator(SPEED_STOP)
+                self.move_stop_elevator(Data.SPEED_STOP)
 
                 self._last_destination_time = current_time
                 self._current_destination_index += 1
@@ -72,7 +63,7 @@ class Elevator(pygame.sprite.Sprite):
                     self._current_destination_index = 0
 
     def y_to_floor(self, y):
-        return abs((INITIAL_FLOOR_Y - y) / - FLOOR_HEIGHT)
+        return abs((Data.INITIAL_FLOOR_Y - y) / - Data.FLOOR_HEIGHT)
 
     def floor_to_y(self, floor):
         """Converts a floor number to the y-coordinate.
@@ -81,7 +72,7 @@ class Elevator(pygame.sprite.Sprite):
         Returns:
             int: The y-coordinate corresponding to the floor.
             """
-        return INITIAL_FLOOR_Y - (floor.id * FLOOR_HEIGHT)
+        return Data.INITIAL_FLOOR_Y - (floor.id * Data.FLOOR_HEIGHT)
 
     def total_travel_length(self, destination_floor):
         """Calculate the total travel length to a destination floor.
@@ -104,8 +95,7 @@ class Elevator(pygame.sprite.Sprite):
 
         count_of_floors = len(des_copy) - 2  # excluding the 2 floor that was added for testing travel time and the
         # elevators current position
-
-        return length + (count_of_floors * DELAY_AT_ARRIVAL * PIXELS_PER_SECOND)
+        return length + (count_of_floors * Data.DELAY_AT_ARRIVAL * Data.PIXELS_PER_SECOND)
 
     def add_destination(self, destination_floor):
         """Add a destination floor to the elevator's queue.
@@ -119,7 +109,7 @@ class Elevator(pygame.sprite.Sprite):
         current_time = time.time()
         elapsed_time = current_time - LastTime.last[self._id]
 
-        speed = elapsed_time * 116
+        speed = elapsed_time * Data.PIXELS_PER_SECOND
         if elapsed_time > 1:
             speed = 2
         if dest_to_target > 5:
@@ -130,7 +120,7 @@ class Elevator(pygame.sprite.Sprite):
             else:
                 self.rect.y += self._speed
         else:
-            self.move_stop_elevator(SPEED_FINAL)
+            self.move_stop_elevator(Data.SPEED_FINAL)
             if self.rect.y > target_y:
                 self.rect.y -= 1
             else:

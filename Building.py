@@ -1,19 +1,10 @@
 import pygame
-import time as ctime
-
-from Elevator1 import Elevator
+from Elevator import Elevator
 from Floor import Floor
-
-ELEVATOR_IMAGE = 'resources/elv-small.png'
-BRICK_TEXTURE = 'resources/brick-texture.png'
-BLACK = [0, 0, 0]
-WHITE = [255, 255, 255]
-GRAY = [180, 180, 180]
-BUTTON_RADIUS = 20
-FLOOR_TRANSIT_TIME = 0.2
+import Data
 
 
-def eucledian_distance(point1, point2):
+def euclidean_distance(point1, point2):
     x1, y1 = point1
     x2, y2 = point2
     return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
@@ -46,7 +37,7 @@ class Building:
 
         for i in range(num_of_floors):
 
-            brick_y = 550 - i * 58
+            brick_y = Data.INITIAL_FLOOR_Y - i * Data.FLOOR_HEIGHT
             line_y = brick_y - 3
 
             brick_texture = image
@@ -55,12 +46,13 @@ class Building:
             brick_texture_center_x = brick_texture_width // 2
             brick_texture_center_y = brick_texture_height // 2
 
-            pygame.draw.circle(brick_texture, GRAY, (brick_texture_center_x, brick_texture_center_y), BUTTON_RADIUS)
+            pygame.draw.circle(brick_texture, 'GRAY', (brick_texture_center_x, brick_texture_center_y),
+                               Data.BUTTON_RADIUS)
 
             floor_num_text = Floor.floor_panel(self, 10, i)
 
             if i != num_of_floors - 1:
-                pygame.draw.line(screen, BLACK, (10, line_y), (159, line_y), 7)
+                pygame.draw.line(screen, 'BLACK', (10, line_y), (159, line_y), 7)
 
             screen.blit(brick_texture, (10, brick_y))
             screen.blit(floor_num_text, (brick_texture_center_x + 6, brick_y + brick_texture_center_y - 7))
@@ -80,15 +72,17 @@ class Building:
             elevator = Elevator(i, image, (init_elevator_x_position + i * 55))
             self.elevator_group.add(elevator)
 
-    def call_some_elevator(self, current_floor):
+    def call_some_elevator(self, current_floor, screen):
         """Call an elevator to the specified floor.
 
         Args:
-            current_floor (int): The current floor to call the elevator.
+            current_floor: The current floor to call the elevator.
 
         Returns:
             Elevator: The selected elevator to respond to the call.
         """
+        if current_floor.timer > 0:
+            return
         selected_elevator = None
         min_pixels_to_travel = float('inf')
         for elevator in self.elevator_group:
@@ -100,11 +94,8 @@ class Building:
 
         selected_elevator.add_destination(current_floor)
 
-        self.timers[current_floor.id] = min_pixels_to_travel / 116
-        current_floor.timer = min_pixels_to_travel / 116
-        print(current_floor.timer)
-
-        return selected_elevator
+        call_status = True
+        current_floor.update_floor_call(min_pixels_to_travel, call_status, screen)
 
     def is_on_button(self, button_center_coordinates, point):
         """Check if a point is within the range of a button on the screen.
@@ -115,73 +106,28 @@ class Building:
             Returns:
                 bool: True if the point is within the range of the button, False otherwise.
             """
-        return eucledian_distance(button_center_coordinates, point) < BUTTON_RADIUS
+        return euclidean_distance(button_center_coordinates, point) < Data.BUTTON_RADIUS
 
     def update(self, screen):
         self.elevator_group.update(screen, self.timers)
-        for floor in self.floors:
-            travel_time = self.timers[floor.id]
-
-            speed = travel_time / 116
-            # screen.fill((255, 255, 255), (190, 500, 200, 25))
-
-            # font = pygame.font.Font(None, 25)
-            # time_text = font.render(f'{round((travel_time - 1) / 100, 2)}', True, BLACK)
-            # screen.blit(time_text, (190, 500 + 10))
-        # current_time = ctime.time()
-        # elapsed_time = current_time - LastTime.last_timer
-        # speed = elapsed_time
-        # if elapsed_time > 1:
-        #     speed = 0.01
-        clock = 60 / 15
-        # for time in range(len(self.timers)):
-        #     if self.timers[time] > 0:
-        #         self.timers[time] -= elapsed_time * 3
-        #
-        #     if self.timers[time] < FLOOR_TRANSIT_TIME:
-        #         self.timers[time] = 0
-        #         LastTime.last_timer = ctime.time()
 
         current_tick = pygame.time.get_ticks()
-        print(current_tick)
         time_delta = current_tick - self.last_tick  # Calculate time difference since last frame
-        print(time_delta)
         self.last_tick = current_tick  # Update last_tick for next frame
-        print(self.last_tick)
 
         for floor in self.floors:
             if floor.timer > 0:
                 floor.timer -= time_delta/1000  # Subtract time delta from floor timer
 
-        # for floor in self.floors:
-        #
-        #     if floor.timer > 0:
-        #         floor.timer -= elapsed_time
-
             if floor.timer <= 0:
-                floor.timer = 0
-                # self.last_tick = pygame.time.get_ticks()
-                floor.floor_panel(True)
+                call_status = False
+                min_pixels_to_travel = 0
+                floor.update_floor_call(min_pixels_to_travel, call_status, screen)
 
                 for floors in self.floors:
-                    floor_num = int(floors.id)
-                    screen.fill(WHITE, (190, 550 - floor_num * 58, 200, 25))
+                    floor_num = floors.id
+                    screen.fill('WHITE', (190, 550 - floor_num * 58, 200, 25))
                     font = pygame.font.Font(None, 25)
-                    time_text = font.render(f'00:{floors.timer:.02f}', True, BLACK)
+                    time_text = font.render(f'00:{floors.timer:.02f}', True, 'BLACK')
                     screen.blit(time_text, (190, 550 - (floor_num * 58) + 10))
-        # modified_timer_index = None
-        # for time in range(len(self.timers)):
-        #     if self.timers[time] > 0:
-        #         self.timers[time] -= 0.01#((1 * clock) / 116)
-        #         modified_timer_index = time
-        #
-        #     if self.timers[time] < FLOOR_TRANSIT_TIME:
-        #         self.timers[time] = 0
-        #
-        # if modified_timer_index is not None:
-        #     # Only redraw the modified timer
-        #     floor = modified_timer_index
-        #     screen.fill(WHITE, (190, 550 - floor * 58, 200, 25))
-        #     font = pygame.font.Font(None, 25)
-        #     time_text = font.render(f'00:{self.timers[floor]:.02f}', True, BLACK)
-        #     screen.blit(time_text, (190, 550 - (floor * 58) + 10))
+
