@@ -1,7 +1,11 @@
+import json
 import pygame
+import time
 from Elevator import Elevator
 from Floor import Floor
-import Data
+
+with open('Data.json','r') as file:
+    Data = json.load(file)
 
 
 def euclidean_distance(point1, point2):
@@ -19,7 +23,7 @@ class Building:
         Arg:
             floor_count (int): The number of floors in the building.
             """
-        self.floors = pygame.sprite.Group()
+        self._floors = pygame.sprite.Group()
         self.elevator_group = pygame.sprite.Group()
         self.timers = [0] * (number_of_floors + 1)
         self.construct_floors(number_of_floors, floor_image, screen)
@@ -37,7 +41,7 @@ class Building:
 
         for i in range(num_of_floors):
 
-            brick_y = Data.INITIAL_FLOOR_Y - i * Data.FLOOR_HEIGHT
+            brick_y = Data["INITIAL_FLOOR_Y"] - i * Data["FLOOR_HEIGHT"]
             line_y = brick_y - 3
 
             brick_texture = image
@@ -47,7 +51,7 @@ class Building:
             brick_texture_center_y = brick_texture_height // 2
 
             pygame.draw.circle(brick_texture, 'GRAY', (brick_texture_center_x, brick_texture_center_y),
-                               Data.BUTTON_RADIUS)
+                               Data["BUTTON_RADIUS"])
 
             floor_num_text = Floor.floor_panel(self, 10, i)
 
@@ -58,7 +62,7 @@ class Building:
             screen.blit(floor_num_text, (brick_texture_center_x + 6, brick_y + brick_texture_center_y - 7))
 
             floor = Floor(i, brick_texture, brick_y)
-            self.floors.add(floor)
+            self._floors.add(floor)
 
     def construct_elevators(self, number_of_elevators, image):
         """Construct the elevators in the building.
@@ -72,7 +76,7 @@ class Building:
             elevator = Elevator(i, image, (init_elevator_x_position + i * 55))
             self.elevator_group.add(elevator)
 
-    def call_some_elevator(self, current_floor, screen):
+    def call_some_elevator(self, current_floor, screen, background):
         """Call an elevator to the specified floor.
 
         Args:
@@ -80,8 +84,10 @@ class Building:
 
         Returns:
             Elevator: The selected elevator to respond to the call.
+            :param current_floor:
+            :param screen:
         """
-        if current_floor.timer > 0:
+        if current_floor.get_timer() > 0:
             return
         selected_elevator = None
         min_pixels_to_travel = float('inf')
@@ -93,9 +99,12 @@ class Building:
                 min_pixels_to_travel = test_pixels_to_travel
 
         selected_elevator.add_destination(current_floor)
-
         call_status = True
         current_floor.update_floor_call(min_pixels_to_travel, call_status, screen)
+
+        # self.elevator_group.clear(screen, background)
+        # self.update(screen)
+        # self.draw(screen)
 
     def is_on_button(self, button_center_coordinates, point):
         """Check if a point is within the range of a button on the screen.
@@ -106,7 +115,7 @@ class Building:
             Returns:
                 bool: True if the point is within the range of the button, False otherwise.
             """
-        return euclidean_distance(button_center_coordinates, point) < Data.BUTTON_RADIUS
+        return euclidean_distance(button_center_coordinates, point) < Data["BUTTON_RADIUS"]
 
     def update(self, screen):
         self.elevator_group.update(screen, self.timers)
@@ -115,19 +124,19 @@ class Building:
         time_delta = current_tick - self.last_tick  # Calculate time difference since last frame
         self.last_tick = current_tick  # Update last_tick for next frame
 
-        for floor in self.floors:
-            if floor.timer > 0:
-                floor.timer -= time_delta/1000  # Subtract time delta from floor timer
+        for floor in self._floors:
+            if floor.get_timer() > 0:
+                timer = time_delta / 1000
+                floor.update_timer(timer)
 
-            if floor.timer <= 0:
+            if floor.get_timer() <= 0:
                 call_status = False
                 min_pixels_to_travel = 0
                 floor.update_floor_call(min_pixels_to_travel, call_status, screen)
 
-                for floors in self.floors:
-                    floor_num = floors.id
-                    screen.fill('WHITE', (190, 550 - floor_num * 58, 200, 25))
+                for floors in self._floors:
+                    floor_num = floors.get_id()
+                    screen.fill('WHITE', (190, 550 - floor_num * 58, 70, 25))
                     font = pygame.font.Font(None, 25)
-                    time_text = font.render(f'00:{floors.timer:.02f}', True, 'BLACK')
+                    time_text = font.render(f'{floors.get_timer():.01f}', True, 'BLACK')
                     screen.blit(time_text, (190, 550 - (floor_num * 58) + 10))
-

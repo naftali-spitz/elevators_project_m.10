@@ -1,10 +1,21 @@
+import json
 import time
 import pygame
 from collections import deque
 from itertools import pairwise
 
-import Data
-import LastTime
+with open('Data.json', 'r') as file:
+    Data = json.load(file)
+
+
+def convert_floor_num_to_y_coordinate(floor):
+    """Converts a floor number to the y-coordinate."""
+    return Data["INITIAL_FLOOR_Y"] - (floor.get_id() * Data["FLOOR_HEIGHT"])
+
+
+def convert_y_coordinate_to_floor_num(y):
+    """Converts a y-coordinate to the floor number."""
+    return abs((Data["INITIAL_FLOOR_Y"] - y) / - Data["FLOOR_HEIGHT"])
 
 
 class Elevator(pygame.sprite.Sprite):
@@ -23,18 +34,18 @@ class Elevator(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.topleft = (x, 550)
         self._speed = 0
-        self._destination = []
         self._destinations = deque(maxlen=20)
         self._last_destination_time = 0
         self._current_destination_index = 0
-        self.travel_time = 0
+        self._travel_time = 0
+        self._last_time = 0
+        self._delay = 0
 
-    def move_stop_elevator(self, speed):
-        """Set the speed of the elevator.
-        Arg:
-            speed (int): The speed at witch the elevator should move.
-        """
+
+    def set_elevator_speed(self, speed):
+        """Set the speed of the elevator."""
         self._speed = speed
+
 
     def update(self, screen, timers):
         """Update the elevator's position based on its destinations."""
@@ -43,18 +54,18 @@ class Elevator(pygame.sprite.Sprite):
             return
         current_time = pygame.time.get_ticks()
 
-        if current_time - self._last_destination_time >= Data.DELAY_AT_ARRIVAL * 1000:
+        if current_time - self._last_destination_time >= Data["DELAY_AT_ARRIVAL"] * 1000:
             target_y = self._destinations[0]
 
             if self.rect.y != target_y:
-                self.move_elev(target_y, screen, timers)
 
+                self.move_elev(target_y, screen, timers)
             else:
-                # ding_sound = pygame.mixer.Sound('resources/ding.mp3')
-                # ding_sound.play()
+                ding_sound = pygame.mixer.Sound(Data["DING"])
+                ding_sound.play()
 
                 self._destinations.popleft()
-                self.move_stop_elevator(Data.SPEED_STOP)
+                self.set_elevator_speed(Data["SPEED_STOP"])
 
                 self._last_destination_time = current_time
                 self._current_destination_index += 1
@@ -62,17 +73,6 @@ class Elevator(pygame.sprite.Sprite):
                 if self._current_destination_index >= len(self._destinations):
                     self._current_destination_index = 0
 
-    def y_to_floor(self, y):
-        return abs((Data.INITIAL_FLOOR_Y - y) / - Data.FLOOR_HEIGHT)
-
-    def floor_to_y(self, floor):
-        """Converts a floor number to the y-coordinate.
-        Arg:
-            floor (int): The floor number.
-        Returns:
-            int: The y-coordinate corresponding to the floor.
-            """
-        return Data.INITIAL_FLOOR_Y - (floor.id * Data.FLOOR_HEIGHT)
 
     def total_travel_length(self, destination_floor):
         """Calculate the total travel length to a destination floor.
@@ -81,10 +81,10 @@ class Elevator(pygame.sprite.Sprite):
         Returns:
             int: The total travel length in pixels.
             """
-        destination = Elevator.floor_to_y(0, destination_floor)
-
+        destination = convert_floor_num_to_y_coordinate(destination_floor)
         length = 0
         des_copy = list(self._destinations)
+
         des_copy.insert(0, self.rect.y)
         if destination in des_copy:
             des_copy = des_copy[0:des_copy.index(destination)]
@@ -93,37 +93,39 @@ class Elevator(pygame.sprite.Sprite):
         for [current, next] in pairwise(des_copy):
             length += abs(current - next)
 
+        add_delay = 0
+        if pygame.time.get_ticks() - self._last_destination_time <= Data["DELAY_AT_ARRIVAL"] * 1000:
+            add_delay = (Data["DELAY_AT_ARRIVAL"] * 1000) - (pygame.time.get_ticks() - self._last_destination_time)
+            add_delay = (add_delay / 1000) * Data["PIXELS_PER_SECOND"]
         count_of_floors = len(des_copy) - 2  # excluding the 2 floor that was added for testing travel time and the
-        # elevators current position
-        return length + (count_of_floors * Data.DELAY_AT_ARRIVAL * Data.PIXELS_PER_SECOND)
+        return length + add_delay + (count_of_floors * Data["DELAY_AT_ARRIVAL"]) * Data["PIXELS_PER_SECOND"]
+
 
     def add_destination(self, destination_floor):
-        """Add a destination floor to the elevator's queue.
-        Args:
-            destination_floor (int): The destination floor number to add.
-            """
-        self._destinations.append(Elevator.floor_to_y(0, destination_floor))
+        """Add a destination floor to the elevator's queue."""
+        self._destinations.append(convert_floor_num_to_y_coordinate(destination_floor))
+
 
     def move_elev(self, target_y, screen, timers):
         dest_to_target = abs(self.rect.y - target_y)
         current_time = time.time()
-        elapsed_time = current_time - LastTime.last[self._id]
+        elapsed_time = current_time - self._last_time
 
-        speed = elapsed_time * Data.PIXELS_PER_SECOND
+        speed = elapsed_time * Data["PIXELS_PER_SECOND"]
         if elapsed_time > 1:
             speed = 2
         if dest_to_target > 5:
 
-            self.move_stop_elevator(speed)
+            self.set_elevator_speed(speed)
             if self.rect.y > target_y:
                 self.rect.y -= self._speed
             else:
                 self.rect.y += self._speed
         else:
-            self.move_stop_elevator(Data.SPEED_FINAL)
+            self.set_elevator_speed(Data["SPEED_FINAL"])
             if self.rect.y > target_y:
                 self.rect.y -= 1
             else:
                 self.rect.y += 1
 
-        LastTime.last[self._id] = time.time()
+        self._last_time = time.time()
